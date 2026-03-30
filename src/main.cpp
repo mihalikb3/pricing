@@ -8,6 +8,7 @@
 #include "PayoffCall.hpp"
 #include "PayoffAsian.hpp"
 #include "StatisticsCollector.hpp"
+#include "GreeksCalculator.hpp"
 
 int main() {
     // Parameters
@@ -22,7 +23,7 @@ int main() {
     RandomGenerator rg(42); 
     PathGenerator pg(spot, rate, vol, expiry, steps);
     
-    // We'll price BOTH a European and an Asian call to compare them
+    // 1. Basic Pricing
     std::unique_ptr<Payoff> european_call = std::make_unique<PayoffCall>(strike);
     std::unique_ptr<Payoff> asian_call = std::make_unique<PayoffAsian>(strike);
 
@@ -33,7 +34,6 @@ int main() {
 
     for (long long i = 0; i < num_sims; ++i) {
         std::vector<double> path = pg.generatePath(rg);
-        
         stats_euro.addPayoff((*european_call)(path));
         stats_asian.addPayoff((*asian_call)(path));
     }
@@ -44,6 +44,15 @@ int main() {
     std::cout << "\n--- MONTE CARLO PRICING COMPARISON ---" << std::endl;
     std::cout << "European Call Price: $" << stats_euro.getMean() * discount << std::endl;
     std::cout << "Asian Call Price:    $" << stats_asian.getMean() * discount << " (Should be lower!)" << std::endl;
+    
+    // 2. Greeks Calculation (Sensitivity Analysis)
+    std::cout << "\n--- CALCULATING GREEKS (EUROPEAN CALL) ---" << std::endl;
+    GreeksCalculator gc(spot, rate, vol, expiry, steps);
+    Greeks greeks = gc.calculate(*european_call, num_sims, 12345);
+
+    std::cout << "Delta (\u0394): " << greeks.delta << " (Change in price per $1 move in stock)" << std::endl;
+    std::cout << "Gamma (\u0393): " << greeks.gamma << " (Curvature/Change in Delta)" << std::endl;
+    std::cout << "Vega (\u03BD):  " << greeks.vega << " (Sensitivity to 1% move in Volatility)" << std::endl;
     std::cout << "--------------------------------------" << std::endl;
 
     return 0;

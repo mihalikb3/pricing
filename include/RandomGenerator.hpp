@@ -15,6 +15,9 @@ public:
     // Generate a single standard normal sample N(0,1)
     double getGaussian();
 
+    // Reset the engine with a specific seed for reproducible path bumping (Common Random Numbers)
+    void resetSeed(unsigned int seed);
+
     // Fill a vector with Gaussian samples
     void fillGaussian(std::vector<double>& vec);
 

@@ -17,4 +17,9 @@ endif()
 include_directories(include)
 
 # Executable (we will add source files as we create them)
-add_executable(mc_engine src/main.cpp src/RandomGenerator.cpp src/PathGenerator.cpp)
+add_executable(mc_engine 
+    src/main.cpp 
+    src/RandomGenerator.cpp 
+    src/PathGenerator.cpp
+    src/GreeksCalculator.cpp
+)
