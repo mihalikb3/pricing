@@ -2,38 +2,49 @@
 #include <vector>
 #include <iomanip>
 #include <memory>
+#include <cmath>
 #include "RandomGenerator.hpp"
 #include "PathGenerator.hpp"
 #include "PayoffCall.hpp"
+#include "PayoffAsian.hpp"
+#include "StatisticsCollector.hpp"
 
 int main() {
-    RandomGenerator rg(42); 
-
-    // Simulation Parameters
+    // Parameters
     double spot = 100.0;
+    double strike = 100.0;
     double rate = 0.05;
     double vol = 0.20;
     double expiry = 1.0;
-    int steps = 252; // 252 trading days in a year
+    int steps = 252;
+    long long num_sims = 100000;
 
+    RandomGenerator rg(42); 
     PathGenerator pg(spot, rate, vol, expiry, steps);
     
-    // Create our Payoff (European Call with Strike 100)
-    // Using std::unique_ptr for memory safety (RAII)
-    std::unique_ptr<Payoff> call_option = std::make_unique<PayoffCall>(100.0);
+    // We'll price BOTH a European and an Asian call to compare them
+    std::unique_ptr<Payoff> european_call = std::make_unique<PayoffCall>(strike);
+    std::unique_ptr<Payoff> asian_call = std::make_unique<PayoffAsian>(strike);
 
-    std::cout << "Simulating One Year (252 steps) for a Call Option (Strike 100):" << std::endl;
-    std::vector<double> path = pg.generatePath(rg);
+    StatisticsCollector stats_euro;
+    StatisticsCollector stats_asian;
 
-    double final_price = path.back();
-    double payoff_val = (*call_option)(path);
+    std::cout << "Starting Monte Carlo Engine (100,000 paths)..." << std::endl;
 
-    std::cout << std::fixed << std::setprecision(2);
-    std::cout << "------------------------------------" << std::endl;
-    std::cout << "Starting Price: $" << spot << std::endl;
-    std::cout << "Final Price:    $" << final_price << std::endl;
-    std::cout << "Payoff Value:   $" << payoff_val << std::endl;
-    std::cout << "------------------------------------" << std::endl;
+    for (long long i = 0; i < num_sims; ++i) {
+        std::vector<double> path = pg.generatePath(rg);
+        
+        stats_euro.addPayoff((*european_call)(path));
+        stats_asian.addPayoff((*asian_call)(path));
+    }
+
+    double discount = std::exp(-rate * expiry);
+
+    std::cout << std::fixed << std::setprecision(4);
+    std::cout << "\n--- MONTE CARLO PRICING COMPARISON ---" << std::endl;
+    std::cout << "European Call Price: $" << stats_euro.getMean() * discount << std::endl;
+    std::cout << "Asian Call Price:    $" << stats_asian.getMean() * discount << " (Should be lower!)" << std::endl;
+    std::cout << "--------------------------------------" << std::endl;
 
     return 0;
 }
