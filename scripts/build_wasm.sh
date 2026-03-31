@@ -26,10 +26,12 @@ echo "🚀 Building C++ Monte Carlo Engine to WebAssembly..."
 echo "----------------------------------------------------"
 
 # Compile with Emscripten
+# Added GreeksCalculator.cpp to the build!
 emcc -O3 -std=c++20 \
     src/wasm_api.cpp \
     src/PathGenerator.cpp \
     src/RandomGenerator.cpp \
+    src/GreeksCalculator.cpp \
     -Iinclude \
     -o "$WEBSITE_JS_DIR/mc_engine.js" \
     --bind \
