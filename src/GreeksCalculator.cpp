@@ -83,5 +83,26 @@ Greeks GreeksCalculator::calculate(const Payoff& payoff, long long num_sims, uns
     // Theta = [V(t-h) - V(t)] / h (Approximated as decay per unit time)
     results.theta = (v_theta_down - v_base) / time_h;
 
+    results.price = v_base;
+    results.std_error = stats_base.getStandardError() * discount;
+    results.prob_profit = stats_base.getProbProfit();
+
+    return results;
+}
+
+Greeks GreeksCalculator::calculateBasic(const Payoff& payoff, long long num_sims, unsigned int seed) {
+    Greeks results;
+    StatisticsCollector stats;
+    RandomGenerator rg(seed);
+    PathGenerator pg(spot_, rate_, vol_, expiry_, steps_);
+
+    for (long long i = 0; i < num_sims; ++i) {
+        stats.addPayoff(payoff(pg.generatePath(rg)));
+    }
+
+    results.price = stats.getMean() * std::exp(-rate_ * expiry_);
+    results.std_error = stats.getStandardError() * std::exp(-rate_ * expiry_);
+    results.prob_profit = stats.getProbProfit();
+
     return results;
 }

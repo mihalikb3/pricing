@@ -23,6 +23,12 @@ public:
      */
     Greeks calculate(const Payoff& payoff, long long num_sims, unsigned int seed);
 
+    /**
+     * @brief Optimized calculation for Price, StdError, and ProbProfit only.
+     * Skips the expensive "bumping" required for Greeks.
+     */
+    Greeks calculateBasic(const Payoff& payoff, long long num_sims, unsigned int seed);
+
 private:
     double spot_;
     double rate_;
